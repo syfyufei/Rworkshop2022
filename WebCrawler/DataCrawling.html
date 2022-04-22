@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>网络爬虫进阶</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sun Yufei" />
+    <meta name="date" content="2022-04-09" />
+    <script src="libs/header-attrs-2.13/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="zh-CN_custom.css" type="text/css" />
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# 网络爬虫进阶
+## R workshop Lecture6
+### Sun Yufei
+### Department of Political Science, Tsinghua University
+### 2022-04-09
+
+---
+
+
+## Outline
+
+- 初窥门径：爬虫基础知识
+
+- 利刃出鞘：我们的爬虫工具箱
+
+- 小试牛刀：如何使用R抓取政府网页
+
+- 大试牛刀：如何爬取微信公众号
+
+
+---
+class: inverse, center, middle
+
+# 初窥门径：爬虫基础知识
+
+---
+
+## 什么是爬虫
+
+在广袤的互联网中，有这样一种"爬虫生物"，穿梭于万维网中，将承载信息的网页吞食，然后交由搜索引擎进行转化，吸收，并最终"孵化"出结构化的数据，供人快速查找，展示。
+
+这种"生物"，其名曰"网络蜘蛛"（又被称为网页蜘蛛，网络机器人）。网络蜘蛛虽以数据为食，但是数据的生产者-网站，也需要借助爬虫的帮助，将网页提交给搜索引擎。
+
+&lt;img src="http://www.chipscoco.com/zb_users/upload/2021/02/202102051612492579435384.jpg" width="30%" /&gt;
+---
+
+## 为什么要爬虫
+
+- 社会科学研究需要的数据更加多元
+
+- 但数据源拒绝给我们结构化的数据查询方式或API
+
+---
+
+## 爬虫能干什么？
+
+## 爬虫的典型案例：搜索引擎
+
+搜索引擎是Web时代用户使用互联网的入口和指南。
+
+网络爬虫是搜索引擎系统中十分重要的组成部分，它负责从互联网中搜集网页，采集信息，这些网页信息用于建立索引从而为搜索引擎提供支持，它决定着整个引擎系统的内容是否丰富，信息是否即时，因此其性能的优劣直接影响着搜索引擎的效果。
+
+&lt;img src="https://piaosanlang.gitbooks.io/spiders/content/photos/01-engine.png" width="50%" /&gt;
+
+---
+
+## 网络基础知识
+
+- 网络访问是个什么样的过程
+
+- URI和URL：我们想要的东西存在哪里？
+
+- Hypertext：我们想要的东西以什么方式存在
+
+- HTTP和HTTPS：我们想要的东西以什么样的方式传输
+
+- HTTP请求过程：我们如何告诉别人我们想要什么
+
+---
+
+## 网络访问是个什么样的过程
+
+&gt; “网站是把个人计算机连上网络的过程，爬虫就是通过网络到别人计算机下载数据”
+
+爬虫是模拟用户在浏览器或者某个应用上的操作，把操作的过程、实现自动化的程序。
+当我们在浏览器中输入一个url后回车，后台会发生什么？
+
+简单来说这段过程发生了以下四个步骤：
+
+- 查找域名对应的IP地址。
+
+- 向IP对应的服务器发送请求。
+
+- 服务器响应请求，发回网页内容。
+
+- 浏览器解析网页内容。
+
+---
+
+## 网络访问是个什么样的过程
+
+&lt;img src="https://piaosanlang.gitbooks.io/spiders/content/photos/01-webdns.jpg" width="90%" /&gt;
+
+---
+
+## URI和URL：我们想要的东西存在哪里？
+
+Universar Resource Locator(URL)，统一资源定位符
+
+Uniform Resource Identifier(URI)，统一资源标志符
+
+--
+
+URI = URN + URL
+
+--
+
+URN:只命名资源而不指定如何定位资源，比如:
+
+isbn:1203102348
+
+它只是指定了一本书的ISBN，可以唯一标识这本书，但是没有指定到哪里定位这本书
+
+---
+
+## URL
+
+&gt; https://www.baidu.com/
+
+&gt; https://github.com/syfyufei/Rworkshop2022/blob/main/WebCrawler/WebCrawler.html
+
+&gt; http://166.111.105.29:8787/
+
+
+url的基本格式：
+
+- schema://host[:port#]/path/…/
+
+- schema： 协议（例如：http，https，ftp）
+
+- host：服务器的IP或域名
+
+- port：服务器的端口
+
+- path：访问资源的路径
+
+---
+
+## Hypertext：我们想要的东西以什么方式存在
+
+超文字（Hypertext）：浏览器里看到的网页就是Hypertext解析而成的，其网页源代码是一系列的HTML代码，里面包含了一系列的标签，比如：
+
+- img 标签显示图片
+- p 标签指定显示段落
+- a标签指定链接
+
+--
+
+.navy[学会看源码啦，下次遇到某些网页禁止复制网页内容，你想到了解决办法吗？]
+
+---
+
+## HTTP和HTTPS：我们想要的东西以什么样的方式传输
+
+文本传输协议：
+
+- http
+
+- https
+
+- ftp
+
+- sftp
+
+
+HTTP（Hyper Text Transfer Protocol)超文本传输协议，用于从网络传输超文本数据到本地浏览器的传输协议，能保证高效而准确的传送超文本文档。由万维网协会（World Wide Web Consortium）和Internet工作小组IETF（Internet Engineering Task Force）共同合作和制定的规范。
+
+HTTPS（Hyper Test Transfer protocol over .red[Secure Socket Layer]）是以安全为目标的HTTP通道，简单讲是HTTP的安全版，即HTTP下加入SSL层，简称为HTTPS，安全基础是SSL，因此通过它传输的内容都是经过SSL加密。
+
+---
+
+## 请求和响应：我们如何告诉别人我们想要什么
+
+在浏览器中输入一个url，回车之后便可以在浏览器中观察到页面内容，这个过程是浏览器向网站所在的服务器发送了一个请求，网站的服务器接收到这个请求后进行处理和解析，然后将对应的响应传回给浏览器。
+
+- General(总览)
+
+- Response Headers（响应头）
+
+- **Request Headers（请求头）**
+
+---
+
+## 请求
+
+- 请求方法（Request Method)
+
+- 请求的网址（Request URL）
+
+- 请求头 （Request Headers)
+
+---
+
+## 请求方法
+
+GET:
+
+在浏览器中直接输入URL并回车，便发起了一个GET请求，请求的参数会包含在URL中
+
+
+POST:
+
+POST请求大多数在表单提交时发起，例如：对于一个登录表单，输入用户名和密码后，点击“登录”按钮，这通常会发起一个POST请求，起数据通常以表单的形式传输，而不会体现在URL中。
+
+
+GET和POST的区别：
+
+- GET请求中的参数包含在URL中，数据可以在URL中看到，而POST请求的URL不会包含这些数据，数据都是通过表单的形式传输的，会包含在请求体中
+
+- GET请求提交的数据最多只有1024字节，而POST请求没有限制
+
+---
+
+## 请求的网址
+
+请求的网址：即统一资源定位符URL，可以唯一确定我们想要请求的资源
+
+
+## 请求头
+
+用来说明服务器要使用的附加信息，比较重要的信息有Cookie、User-Agent
+
+Cookie：也常用复数形式Cookies，这是网站为了辨别用户进行会话跟踪而存储在本地的数据，它的主要功能是维持当前访问会话。例如：我们输入用户名和密码成功登陆到某个网站后，服务器会用会话保存登陆状态信息，后面我们每次刷新或请求该站点的其它页面时，会发现都是登陆状态，这就是Cookie的功劳。Cookies里面有信息标识了我们所对应的服务器的会话，每次在请求该站点时，都会在请求头长加上Cookies并将其发送给服务器，服务器通过Cookies识别出是我们自己，并且查出当前状态是登陆状态，所以返回结果就是登陆之后才能看到的网页内容。
+
+User-Agent：简称UA，它是一个特殊的字符串头，可以使服务器识别客户使用的操作系统及版本、浏览器及版本信息等。在做爬虫是加上此信息，可以将爬虫伪装成浏览器，如果不加，将会是默认的爬虫的UA，很有可能会被识别为爬虫。
+
+---
+
+## 响应
+
+响应状态码表示服务器的响应状态：
+
+200	正常
+
+301	本网页永久性转移达到另一个地址
+
+400	请求出现语法错误
+
+403	客户端未能获得授权
+
+404	在指定位置不存在所申请的资源
+
+500	服务器遇到了意料不到的情况
+
+503	服务器由于维护或者负载过重未能应答
+
+---
+class: inverse, center, middle
+
+# 利刃出鞘：我们的爬虫工具箱
+
+---
+
+## 利刃出鞘：我们的爬虫工具箱
+
+- 零代码爬虫工具：“八爪鱼”
+
+- 编程语言们
+
+- 网络抓包工具
+
+---
+class: inverse, center, middle
+
+# 小试牛刀：如何使用R抓取政府网页
+
+---
+
+## 如何解析一个爬虫项目
+
+- 人怎么操作？
+
+&gt; “混在群众队伍中才是最安全的”
+
+- 模仿人
+
+- 有什么反爬机制？
+
+- 我们应该如何突破这些反爬机制？
+
+- 有没有好方法？
+
+---
+
+## 小试牛刀：如何使用R抓取政府网页
+
+- 构造URLs池子
+
+- 循环进行
+
+&gt; https://www.gov.mo/zh-hant/news/
+
+---
+
+## 爬取澳门政府新闻
+
+
+```r
+# http://selectorgadget.com/
+
+urls&lt;- data.frame(1:4295)
+names(urls) &lt;- "url"
+for (n in 1:4295) {
+  urls$url[n] &lt;- paste0("https://www.gov.mo/zh-hant/news-search/page/", n, "/?category_id&amp;entity_id&amp;start_date&amp;end_date")
+  print(n)
+}
+links &lt;- data.frame()
+
+for (n in 1:length(urls$url)) {
+  partlink &lt;- read_html(urls$url[n]) %&gt;% 
+  html_nodes(".links a") %&gt;% 
+  html_attrs()
+  linksP1 &lt;- data.frame(unlist(partlink))
+  links &lt;- rbind(links, linksP1)
+  print(n)
+}
+
+https://www.gov.mo/zh-hant/news-search/page/100/?category_id&amp;entity_id&amp;start_date&amp;end_date
+
+read_html("https://www.gov.mo/zh-hant/news-search/page/100/?category_id&amp;entity_id&amp;start_date&amp;end_date") %&gt;% 
+  html_nodes(".links a") %&gt;% 
+  html_attrs()
+```
+
+---
+
+## 大试牛刀：如何爬取微信公众号
+
+## 项目解析：困难在哪？
+
+- 微信公众号历史的所有文章（在封闭的系统内如何构造IP池子）
+
+--
+
+-如何获得永久链接
+
+--
+
+- 在网页打开是看不到评论的啊喂
+
+
+---
+
+## 网络抓包
+
+互动环节：什么是抓包？
+
+--
+
+抓包就是将网络传输发送与接收的数据包进行截获、重发、编辑、转存等操作
+
+&lt;img src="https://pic1.zhimg.com/80/v2-dbea07ea287aee9383bf51fb65f82524_720w.jpg" width="60%" /&gt;
+
+---
+
+---
+
+class: inverse, center, middle
+
+# 🦀️蟹蟹🦀️
+
+📧[sunyf20@mails.tsinghua.edu.cn](mailto:sunyf20@mails.tsinghua.edu.cn) 
+
+🧑‍💻[Github: syfyufei](https://syfyufei.github.io/)
+
+💻[Yufei Sun: github.com/syfyufei](https://github.com/syfyufei)
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"highlightSpans": true,
+"countIncrementalSlides": false,
+"ratio": "21:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
