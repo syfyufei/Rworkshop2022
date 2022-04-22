@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Simplify your code with R Loop</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Yufei Sun" />
+    <meta name="date" content="2021-11-04" />
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="zh-CN_custom.css" type="text/css" />
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Simplify your code with R Loop
+## From control flow to purrr
+### Yufei Sun
+### Political Science, Tsinghua University
+### 2021-11-04
+
+---
+
+
+## Outline
+
+- 什么是循环
+
+- 为什么要用循环
+
+- R中的循环: Control Flow
+
+- R中的向量化计算: Apply族
+
+- R中优雅的循环迭代: Purrr包
+
+- 来动动手：用循环来简化你的代码
+
+---
+class: inverse, center, middle
+
+# 什么是循环
+
+---
+
+## 什么是循环
+
+- “循环”、“迭代”或只是复制指令是一种古老的做法，它起源于计算机发明之前。它是通过组织一系列动作或“批处理”过程以及对需要重复的部分进行分组来使多步骤过程自动化。
+
+- 所有现代编程语言都提供允许重复指令或指令块的特殊结构。
+
+- 从广义上讲，现代编程语言中有两种类型的这些特殊结构或循环。
+
+  - 一些循环执行规定的次数，由计数器或索引控制，在每个迭代周期递增。这些是for循环系列的一部分。
+
+  - 一些循环基于逻辑条件的开始和验证。在循环结构的开始或结束时测试条件。这些变体分别属于循环系列while或repeat系列。
+
+---
+class: inverse, center, middle
+
+# 为什么要循环？♻️
+
+---
+class: inverse, center, middle
+
+# 懒
+
+--
+
+# Be lazy, but on the right track!
+
+---
+
+## 为什么要循环？♻️
+
+.center[.red[R是一门编程语言]]
+
+--
+
+循环，用来处理对多个同类输入做相同事情（即迭代），如对不同列做相同操作、对不同数据集做相同操作。
+
+.red[编程中减少代码重复]的两个工具，一是.red[循环]，一是函数。
+
+---
+class: inverse, center, middle
+
+# 我们现在的代码
+
+---
+
+## 我们现在的代码
+
+
+
+
+```r
+caseUrlsTitle &lt;- read_html("https://peace.tsinghua.edu.cn/info/1003/1235.htm") %&gt;% # 获得保卫处“新闻动态”链接网址
+  html_nodes("h1") %&gt;% # 找到新闻标题对应的Nodes
+  html_text() # 提取新闻标题
+
+caseUrlsText &lt;- read_html("https://peace.tsinghua.edu.cn/info/1003/1235.htm") %&gt;% # 获得保卫处“新闻动态”链接网址
+  html_nodes("span") %&gt;% # 找到新闻文本对应的Nodes
+  html_text() %&gt;% # 提取新闻文本
+  paste0(unlist(.), collapse='\n') %&gt;% # 整理新闻文本
+  str_replace_all(., "\n", "") # 替换不必要的分隔符号
+
+print(caseUrlsTitle)
+```
+
+```
+## [1] "保卫部组织全面从严治党集中教育月专题学习"
+```
+
+```r
+print(caseUrlsText)
+```
+
+```
+## [1] "2021-10-15 11:072021-10-15 11:071010月月1414日上午，保卫部党支部召开全面从严治党集中教育月专题组织生活，落实学校关于集中教育月和推进巡视整改工作的部署要求，支部全体党员、职工和外协骨干共约日上午，保卫部党支部召开全面从严治党集中教育月专题组织生活，落实学校关于集中教育月和推进巡视整改工作的部署要求，支部全体党员、职工和外协骨干共约5050人参加。人参加。会议邀请校纪委副书记、纪委办主任李志华作“推进全面从严治党向纵深发展，共建风清气正清华园”专题辅导。他首先领学解读习近平总书记关于全面从严治党重要论述，分析了当前全国、北京市和高校开展全面从严治党面临的形势，强调巡视反馈反映出高校当前共性存在的六个不足。他介绍我校纪检工作坚持“严”的主基调，不断推进全面从严治党向纵深发展，结合高校典型案例开展了警示教育。最后他结合保卫部工作职责，提出加强监督协同的工作建议。辅导内容联系实际，对保卫部今后进一步全面从严治党具有很强的指导意义。会议邀请校纪委副书记、纪委办主任李志华作“推进全面从严治党向纵深发展，共建风清气正清华园”专题辅导。他首先领学解读习近平总书记关于全面从严治党重要论述，分析了当前全国、北京市和高校开展全面从严治党面临的形势，强调巡视反馈反映出高校当前共性存在的六个不足。他介绍我校纪检工作坚持“严”的主基调，不断推进全面从严治党向纵深发展，结合高校典型案例开展了警示教育。最后他结合保卫部工作职责，提出加强监督协同的工作建议。辅导内容联系实际，对保卫部今后进一步全面从严治党具有很强的指导意义。保卫部党支部的四位党员进行了重点发言，分享对党的初心宗旨、党的廉政建设历史、党的特征是用于自我革命、加强党的监督等内容的学习体会。赵光烈从“初心宗旨溯源探真，牢记使命履职创新保卫部党支部的四位党员进行了重点发言，分享对党的初心宗旨、党的廉政建设历史、党的特征是用于自我革命、加强党的监督等内容的学习体会。赵光烈从“初心宗旨溯源探真，牢记使命履职创新——全心全意为人民服务”视角，回顾我党全心全意为人民服务的根本宗旨，强调要“坚持以人民为中心，全面构建平安校园”“坚持清华无小事，敬业履职全力维护校园安稳”“坚持师生至上，全心全意为师生服务，倾心呵护师生权益”。纪检委员王亚平以“以古为镜、以史为鉴，回顾党的廉政建设两三事”为题，结合毛泽东、刘少奇等老一辈共产党人的廉洁风范及关于党的廉政建设的论述，强调增强党性修养是党廉政建设的根本，并开展案例警示教育。于越以“牢记初心使命，推动自我革命”为题，强调自我革命，从严管党治党，是我们党最鲜明的品格。杜立军以“关于从严治党的思考”为题，阐述了全面从严治党的目的、必要性、内容、现状和解决办法。全心全意为人民服务”视角，回顾我党全心全意为人民服务的根本宗旨，强调要“坚持以人民为中心，全面构建平安校园”“坚持清华无小事，敬业履职全力维护校园安稳”“坚持师生至上，全心全意为师生服务，倾心呵护师生权益”。纪检委员王亚平以“以古为镜、以史为鉴，回顾党的廉政建设两三事”为题，结合毛泽东、刘少奇等老一辈共产党人的廉洁风范及关于党的廉政建设的论述，强调增强党性修养是党廉政建设的根本，并开展案例警示教育。于越以“牢记初心使命，推动自我革命”为题，强调自我革命，从严管党治党，是我们党最鲜明的品格。杜立军以“关于从严治党的思考”为题，阐述了全面从严治党的目的、必要性、内容、现状和解决办法。部长、支部书记向春结合近期学习体会和对全面从严治党的思考讲了微党课，强调党员需要“活到老，学到老”，持续加强学习，始终保持谦虚谨慎的态度。他要求全体职工提高政治意识，把自己摆进去，对照巡视要求检查，从制度、机制、作风等方面全面梳理廉政风险。还要进一步加强服务意识，充分体现一流大学校机关的优良工作作风，落实好首问责任制，不断提升安全管理和为师生服务的水平。部长、支部书记向春结合近期学习体会和对全面从严治党的思考讲了微党课，强调党员需要“活到老，学到老”，持续加强学习，始终保持谦虚谨慎的态度。他要求全体职工提高政治意识，把自己摆进去，对照巡视要求检查，从制度、机制、作风等方面全面梳理廉政风险。还要进一步加强服务意识，充分体现一流大学校机关的优良工作作风，落实好首问责任制，不断提升安全管理和为师生服务的水平。在交流环节中，多位党员谈了认识体会，表示要按照中央和学校要求，严格遵守工作纪律和生活纪律，注重师德师风，严守底线和红线，防微杜渐。在交流环节中，多位党员谈了认识体会，表示要按照中央和学校要求，严格遵守工作纪律和生活纪律，注重师德师风，严守底线和红线，防微杜渐。1010月月1111日，保卫部理论中心组开展专题理论学习，四位班子成员逐一进行重点发言，交流学习中央精神和学校专题会议的体会，开展对照检查，互相提醒；同时还就落实巡视整改任务要求进行研讨推进。日，保卫部理论中心组开展专题理论学习，四位班子成员逐一进行重点发言，交流学习中央精神和学校专题会议的体会，开展对照检查，互相提醒；同时还就落实巡视整改任务要求进行研讨推进。（保卫部供稿）（保卫部供稿）"
+```
+
+---
+
+## 这是一页齁！那我们的代码长度：
+
+10*10 = 100
+
+--
+
+如果是想进一步深度学习保卫处所有的政策呢？🐶
+
+代码长度=10*n
+
+--
+
+.center[.red[能简单点嘛！]]
+
+---
+
+## R中的循环♻️
+
+R语言有三种方式实现循环：
+
+- Control Flow: for/while/if/repeat/break/next
+
+- apply函数族
+
+- 泛型函数map
+
+---
+
+我们可以随时使用`?Control`来询问R同学怎么使用Control Flow
+
+## Control Flow: For循环
+
+.center[&lt;img src="fugure/r-for-loop.jpg" height = 450&gt;]
+
+---
+
+## Control Flow: For循环
+
+
+```r
+for (variable in vector) {
+  Body of for
+}
+
+for (a in 1:10) {
+  print(a)
+}
+```
+
+---
+
+## Control Flow: For循环
+
+
+```r
+for (a in 1:10) {
+  print(a)
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+## [1] 5
+## [1] 6
+## [1] 7
+## [1] 8
+## [1] 9
+## [1] 10
+```
+
+---
+
+## Control Flow: For循环
+
+
+```r
+text &lt;- "不要没收我的电动车😭"
+length(text)
+```
+
+```
+## [1] 1
+```
+
+```r
+for (a in 1:length(text)) {
+  character &lt;- substring(text, a, a)
+  print(character)
+}
+```
+
+```
+## [1] "不"
+```
+
+---
+
+## Control Flow: 嵌套For循环
+
+
+```r
+# 伪代码
+for (a in 1:length(办事指南)) {
+  print(a)
+  for (b in 1:length(二级栏目下的文章)) {
+    text &lt;- 文章标题
+    print(文章标题)
+  }
+}
+```
+
+---
+class: small
+
+## Control Flow: 嵌套For循环
+
+
+```r
+url1 &lt;- "https://peace.tsinghua.edu.cn/bszn/xycg.htm"
+
+url1s &lt;- read_html(url1) %&gt;% 
+  html_nodes(".second-nav a") %&gt;% 
+  html_attrs()
+```
+
+
+```r
+for (a in 1:length(url1s)) {
+  title &lt;- titles[a]
+  url1 &lt;- paste0("https://peace.tsinghua.edu.cn/bszn/", unlist(urls)[a])
+  url2s &lt;- read_html(url1) %&gt;% 
+  html_nodes(".list_color") %&gt;% 
+  html_attrs()
+  for (b in 1:length(url2s)) {
+    url2 &lt;- paste0("https://peace.tsinghua.edu.cn/", unlist(url2s[b])[1]) %&gt;% 
+      str_replace_all(., "../info", "info")
+    text &lt;- read_html(url2) %&gt;% 
+      html_nodes("p") %&gt;% 
+      html_text() %&gt;% 
+      paste0(unlist(.), collapse='\n')
+    print(c(title, text))
+  }
+}
+```
+
+---
+## Control Flow: For循环想说爱你不容易
+
+- 速度慢？❌
+
+关于“for循环运行速度慢”的说法，实际上已经过时了，现在的r经过优化for循环的速度已经大大提升，而且在算力不断提升的当下，代码从单一的要求速度之外，可读性也越来越成为考量
+
+
+```r
+million  &lt;- as.matrix(rnorm(100000))
+
+mash &lt;- function(x){
+  for(i in 1:NROW(x))
+    if(x[i] &gt; 0) {
+      x[i] &lt;- 1
+    } else {
+      x[i] &lt;- -1
+    }
+    return(x)
+}
+
+squish &lt;- function(x){
+  if(x &gt;0) {
+    return(1)
+  } else {
+    return(-1)
+  }
+}
+```
+
+---
+
+## apply和for的速度测试
+
+
+```r
+ptm &lt;- proc.time()
+loop_million &lt;- mash(million)
+proc.time() - ptm
+```
+
+```
+##    user  system elapsed 
+##   0.016   0.000   0.016
+```
+
+```r
+ptm &lt;- proc.time()
+apply_million &lt;- apply(million,1, squish)
+proc.time() - ptm
+```
+
+```
+##    user  system elapsed 
+##   0.159   0.012   0.172
+```
+  
+.small[*测试环境：Macbook Pro 2021 Apple M1 Pro]
+
+---
+
+## Control Flow: while循环
+
+经典for循环最大的瓶颈在于其迭代次数是一定的，事先已知的，如像“产生的第一个200张素数”或“争取10个最重要的客户”的情况。
+
+但是，如果我们不知道或不控制迭代次数，并且可能会出现一种或多种事先无法预测的情况，该怎么办？
+
+例如，我们可能想要计算居住在由指定邮政编码标识的区域内的客户数量，或过去两天内网页横幅的点击次数，或类似的不可预见事件。
+
+在这种情况下，while循环及其表亲repeat可能会来救援......
+
+---
+
+## Control Flow: while循环
+
+.center[&lt;img src="fugure/r-while-loop.jpg" height = 450&gt;]
+
+---
+
+## Control Flow: while循环
+
+
+```r
+a = 1
+while (a &lt; 10) {
+  print(a)
+  a = a + 1
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+## [1] 5
+## [1] 6
+## [1] 7
+## [1] 8
+## [1] 9
+```
+
+---
+
+## Control Flow: if/else/break/next
+
+
+```r
+if(条件){要做的事}
+else if {要做的其他事}
+else{其他要做的事}
+```
+
+---
+
+## next
+
+
+```r
+x &lt;- 1:5
+for (val in x) {
+if (val == 3){
+next
+}
+print(val)
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 4
+## [1] 5
+```
+
+---
+
+## break
+
+
+```r
+x &lt;- 1:5
+for (val in x) {
+if (val == 3){
+break
+}
+print(val)
+}
+```
+
+```
+## [1] 1
+## [1] 2
+```
+
+---
+
+## Control Flow: repeat循环
+
+.center[&lt;img src="fugure/r-repeat-loop.jpg" height = 450&gt;]
+
+---
+
+## Control Flow: repeat循环
+
+
+```r
+x &lt;- 1
+repeat {
+print(x)
+x = x+1
+if (x == 6){
+break
+}
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+## [1] 5
+```
+
+---
+class: inverse, center, middle
+
+# 大家！我们用的是R欸！
+
+---
+
+## R与它强大的向量化计算能力
+
+作为R中最基本的数据类型，.red[向量（vector）]在R编程架构里占据了最底层也是最核心的位置。并且从广泛意义上的数据类型而言，R中的矩阵和数组甚至是列表都是向量
+
+--
+
+.center[.red[“一切都是向量”]]
+
+---
+
+## 标量以向量的方式存在
+
+
+```r
+x &lt;- 1
+y &lt;- c(1)
+identical(x, y)
+```
+
+```
+## [1] TRUE
+```
+
+## 向量化计算
+
+向量化计算是一种特殊的并行计算的方式，相比于一般程序在同一时间只执行一个操作的方式，它可以在同一时间执行多次操作，通常是对不同的数据执行同样的一个或一批指令，或者说把指令应用于一个数组/向量。
+
+---
+
+## 从向量化到并行运算
+
+向量化计算还是并行计算的天然先驱，如果你向量化后的算法效率仍然不佳，可以考虑把它并行化
+
+
+```r
+library(snowfall)
+```
+
+```
+## Loading required package: snow
+```
+
+```r
+mysort &lt;- function(x){
+#    replicate(2, sort(x))
+    return(sort(x)[1:10])
+}
+ 
+do_for &lt;- function(M){
+    ans = matrix(0, 10, ncol(M))
+    for(i in 1:ncol(M)){
+        ans[,i] = sort(M[,i])[1:10]
+    }
+}
+ 
+do_apply &lt;- function(M){
+    return(apply(M, 2, mysort))
+}
+ 
+do_snowfall &lt;- function(M, ncl){
+    sfInit(parallel=TRUE, cpus=ncl)  ##初始化集群环境
+    ans &lt;- sfApply(M, 2, mysort)  ##把任务分发到各个slave
+    sfStop()  ##关闭集群
+    return(ans)
+}
+```
+
+---
+
+## 向量化与并行计算
+
+
+```r
+M = matrix(rnorm(10000000), 100, 100000)
+system.time(ans &lt;- do_for(M))
+```
+
+```
+##    user  system elapsed 
+##   3.093   0.038   3.134
+```
+
+```r
+system.time(ans &lt;- do_apply(M))
+```
+
+```
+##    user  system elapsed 
+##   3.131   0.042   3.174
+```
+
+```r
+system.time(ans &lt;- do_snowfall(M, 8))
+```
+
+```
+## Warning in searchCommandline(parallel, cpus = cpus, type = type, socketHosts
+## = socketHosts, : Unknown option on commandline: rmarkdown::render('/Users/
+## sunyufei/Documents/Yufei_Sun/THU/Teaching_Experience/R_workshop_2021Fall/Rloop/
+## rloop.Rmd',~+~~+~encoding~+~
+```
+
+```
+## R Version:  R version 4.1.1 (2021-08-10)
+```
+
+```
+## snowfall 1.84-6.1 initialized (using snow 0.4-4): parallel execution on 8 CPUs.
+```
+
+```
+## 
+## Stopping cluster
+```
+
+```
+##    user  system elapsed 
+##   0.477   0.138   2.841
+```
+
+---
+
+## 向量化与并行计算
+
+- 向量化的计算方式比起传统的循环计算有极大的性能优势。
+
+- 由于并行的过程为：master把任务分解，分发到多个slave进行运算，slave返回结果到master。所以多核计算并不一定比最优的单核计算快，要看性能的瓶颈在slave还是在master上。
+
+- 适合并行/分布计算的情景主要有两种：一是各slave的计算耗费为瓶颈，并行到多核能减少计算时间，越是slave耗时型的计算并行收益越大；二是一台机器的内存不足以进行整体的计算，分布到多台机器计算能把内存占用分开，这种情况下即使分布计算比单机慢也是可以接受的
+
+---
+
+## 在R中用向量化来替代循环: apply族函数
+
+apply函数族可以代替大部分的for循环、while循环，其大意是“应用（apply）”某函数（fun）到一系列的对象上。根据应用到的对象和输出的不同，常用的有：
+
+- 分组计算：apply()和tapply()
+
+- 循环迭代：lapply()和sapply()
+
+- 多变量计算：mapply()
+
+---
+
+## apply族：apply()
+
+`apply(X, MARGIN, FUN, ...)`
+
+- X是对象，如果数组的维数为 2，则为数组或矩阵；
+- MARGIN是一个定义函数如何应用的变量：MARGIN=1，它适用于行，MARGIN=2，它适用于列，MARGIN=c(1,2)，它适用于行和列
+- FUN，这是您要应用于数据的函数。它可以是任何 R 函数，包括用户定义函数 (UDF)。
+
+
+```r
+# Construct a 5x6 matrix
+X &lt;- matrix(rnorm(30), nrow=5, ncol=6)
+
+# Sum the values of each column with `apply()`
+apply(X, 2, sum)
+```
+
+```
+## [1] -1.627496 -1.107635  3.121127 -1.818191 -3.484483 -3.628298
+```
+
+---
+
+## apply族：tapply()
+
+按一组因子INDEX对数据列 x 分组，再分别对每组作用上函数fun。基本格式为：
+
+`tapply(x, INDEX, fun, ..., simplify=TRUE)`
+
+INDEX为与x长度相同的因子列表（若不是因子，R会强制转化为因子）；
+
+simplify=TRUE且fun计算结果为标量值，则返回值为数组，若为FALSE，则返回值为list对象
+
+
+```r
+dat &lt;- data.frame(height=c(174,165,180,171,160), sex=c("F","F","M","M","F"))
+
+tapply(dat$height,dat$sex, mean)   #计算分组均值: 不同sex对应的height的均值
+```
+
+```
+##        F        M 
+## 166.3333 175.5000
+```
+
+.center[.red[默认apply()的对象的各元素作为函数的第一个参数]]
+
+---
+
+## Purrr
+
+- 匿名函数
+
+- 更加确定的输入和输出
+
+- 一致性更高
+
+map有一个绝招就是简写匿名函数:
+
+
+```r
+lapply(list(5, 6, 7), function(x) rnorm(3, x, .1))
+```
+
+```
+## [[1]]
+## [1] 4.865711 4.989493 4.929991
+## 
+## [[2]]
+## [1] 5.845297 6.039752 6.111370
+## 
+## [[3]]
+## [1] 7.005447 6.830174 7.166856
+```
+
+---
+
+## Purrr
+
+用map()的简写版本则是：
+
+```r
+map(list(5, 6, 7), ~ rnorm(3, ., .1))
+```
+
+```
+## [[1]]
+## [1] 5.064342 5.028990 5.135376
+## 
+## [[2]]
+## [1] 6.030737 6.055324 6.098137
+## 
+## [[3]]
+## [1] 6.888950 7.055103 6.937141
+```
+
+---
+
+## purrr
+
+.center[&lt;img src="fugure/purrr.png" height = 500&gt;]
+
+
+---
+
+## 动动手叭：用for循环来爬取“新闻动态”
+
+--
+
+
+```r
+urls &lt;- read_html("https://peace.tsinghua.edu.cn/xwdt.htm") %&gt;% # 获得保卫处“新闻动态”链接网址
+  html_nodes(".list_color") %&gt;% # 找到新闻标题对应的Nodes
+  html_attrs()
+
+
+for (a in 1:length(urls)) {
+  url &lt;- paste0("https://peace.tsinghua.edu.cn/", unlist(urls[a])[1])
+  
+  caseUrlsTitle &lt;- read_html(url) %&gt;% # 获得保卫处“新闻动态”链接网址
+  html_nodes("h1") %&gt;% # 找到新闻标题对应的Nodes
+  html_text() # 提取新闻标题
+
+  caseUrlsText &lt;- read_html(url) %&gt;% # 获得保卫处“新闻动态”链接网址
+    html_nodes("span") %&gt;% # 找到新闻文本对应的Nodes
+    html_text() %&gt;% # 提取新闻文本
+    paste0(unlist(.), collapse='\n') %&gt;% # 整理新闻文本
+    str_replace_all(., "\n", "") # 替换不必要的分隔符号
+
+  print(c("标题：", caseUrlsTitle))
+  print(c("内容：", caseUrlsText))
+}
+```
+
+```
+## [1] "标题："                                              
+## [2] "艺术博物馆与科学博物馆（筹）联合举办消防实操技能培训"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                                                                          
+## [2] "2021-11-01 11:102021-11-01 11:10博物馆员工观摩模拟灭火器灭火博物馆员工观摩模拟灭火器灭火清华大学保卫处副处长管志远讲话清华大学保卫处副处长管志远讲话艺术博物馆副馆长李哲主持本次消防技能培训艺术博物馆副馆长李哲主持本次消防技能培训海淀消防支队讲解如何使用消火栓海淀消防支队讲解如何使用消火栓博物馆员工在海淀消防支队的指导下尝试安装并使用水枪、水带博物馆员工在海淀消防支队的指导下尝试安装并使用水枪、水带"
+## [1] "标题："                     "吉俊民带队开展校园安全检查"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+## [2] "2021-10-27 11:012021-10-27 11:01清华新闻网10月26日电（记者 温兴煜 摄影 崔文瑞）近期，国内安全事故多发，新冠疫情出现新一轮多点散发，且秋冬季为火灾多发期，为切实做好校园安全和冬季防火工作，迎接十九届六中全会顺利召开，10月25日，清华大学副校长吉俊民带队，先后来到校医院、学生服务中心（C楼）、紫荆园食堂、汽车工程研究所、学校东侧门等点位，就学校疫情防控、消防安全、交通安全、施工安全、实验室安全、食品卫生、进校管控等工作开展安全生产检查和隐患排查，布置安全整改工作。清华新闻网10月26日电（记者 温兴煜 摄影 崔文瑞）近期，国内安全事故多发，新冠疫情出现新一轮多点散发，且秋冬季为火灾多发期，为切实做好校园安全和冬季防火工作，迎接十九届六中全会顺利召开，10月25日，清华大学副校长吉俊民带队，先后来到校医院、学生服务中心（C楼）、紫荆园食堂、汽车工程研究所、学校东侧门等点位，就学校疫情防控、消防安全、交通安全、施工安全、实验室安全、食品卫生、进校管控等工作开展安全生产检查和隐患排查，布置安全整改工作。吉俊民检查校医院新建核酸采样仓吉俊民检查校医院新建核酸采样仓吉俊民检查学生课外活动空间吉俊民检查学生课外活动空间吉俊民检查紫荆园食堂吉俊民检查紫荆园食堂吉俊民检查汽车工程研究所吉俊民检查汽车工程研究所吉俊民检查学校东侧门吉俊民检查学校东侧门"
+## [1] "标题："                                                   
+## [2] "北京地铁出新规，明确9月28日起电动代步工具不可携带进站乘车"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+## [2] "2021-09-28 10:352021-09-28 10:35依据《北京市轨道交通运营安全条例》等规定，北京市交通部门对《北京市轨道交通乘客守则》进行了修订，依据《北京市轨道交通运营安全条例》等规定，北京市交通部门对《北京市轨道交通乘客守则》进行了修订，明确自2021年9月28日起，禁止乘客携带电动代步工具进站乘车。明确自2021年9月28日起，禁止乘客携带电动代步工具进站乘车。其中第六条增加“不得携带电动代步工具以及其他妨碍站内、车内通行或对运营安全可能造成影响的物品乘车，无障碍用途的电动轮椅除外”内容;其中第六条增加“不得携带电动代步工具以及其他妨碍站内、车内通行或对运营安全可能造成影响的物品乘车，无障碍用途的电动轮椅除外”内容;明确乘客不得携带电动代步工具进站乘车;第十四条第九项删除“自动衡车”内容，明确乘客“不得在车站、车厢使用折叠自行车、各类滑板车、滑轮鞋、滑板等，不得携带充气气球进站乘车。”明确乘客不得携带电动代步工具进站乘车;第十四条第九项删除“自动衡车”内容，明确乘客“不得在车站、车厢使用折叠自行车、各类滑板车、滑轮鞋、滑板等，不得携带充气气球进站乘车。”"
+## [1] "标题："                                        
+## [2] "清华大学举行2021级全体新生消防安全教育培训活动"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                    
+## [2] "2021-09-14 16:262021-09-14 16:26王希勤到现王希勤到现场指导观摩场指导观摩各部门各部门负责负责人到场指挥人到场指挥海淀消防救援海淀消防救援支队到场指导支队到场指导””海淀消防救海淀消防救援支队演示高空救援援支队演示高空救援研究生新生实操灭研究生新生实操灭火器火器保卫处、学生社区中心、学生部、研工部、校团委保卫处、学生社区中心、学生部、研工部、校团委"
+## [1] "标题："                                                  
+## [2] "全校“安全管理干部提升计划”培训暨安全生产月专题培训会举行"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+## [2] "2021-06-16 08:222021-06-16 08:22清华新闻网6月15日电（通讯员 马丽云 刘金玲）6月10日上午，全校“安全管理干部提升计划”培训暨安全生产月专题培训在电子工程馆三层报告厅举行。北京市海淀消防救援支队、北京市公安局刑侦总队专业人员到场开展专题培训。保卫处处长向春主持培训会。清华新闻网6月15日电（通讯员 马丽云 刘金玲）6月10日上午，全校“安全管理干部提升计划”培训暨安全生产月专题培训在电子工程馆三层报告厅举行。北京市海淀消防救援支队、北京市公安局刑侦总队专业人员到场开展专题培训。保卫处处长向春主持培训会。王向煜作消防安全专题培训王向煜作消防安全专题培训海淀区消防救援支队副支队长王向煜作题为“落实消防安全主体责任，构建‘三自’消防安全管理格局”专题报告。他从海淀区火灾形势分析、重点单位消防安全职责、智慧消防的建设与应用、消防重点工作提示四个方面,介绍了海淀区高校消防安全形势和消防工作特点，强调社会单位必须建立消防安全自查、火灾隐患自除、消防责任自负的消防工作机制，总结了做好消防工作需运用“树立全员消防意识”“深度融入校园文化”“善于综合分析研判”“跟进技术防范手段”四种思维方法。王向煜期望学校加强微消防站建设，同周边消防救援站密切合作，实现消防安全管理和灭火救援能力“双提升”，预防和减少校园火灾事故的发生。海淀区消防救援支队副支队长王向煜作题为“落实消防安全主体责任，构建‘三自’消防安全管理格局”专题报告。他从海淀区火灾形势分析、重点单位消防安全职责、智慧消防的建设与应用、消防重点工作提示四个方面,介绍了海淀区高校消防安全形势和消防工作特点，强调社会单位必须建立消防安全自查、火灾隐患自除、消防责任自负的消防工作机制，总结了做好消防工作需运用“树立全员消防意识”“深度融入校园文化”“善于综合分析研判”“跟进技术防范手段”四种思维方法。王向煜期望学校加强微消防站建设，同周边消防救援站密切合作，实现消防安全管理和灭火救援能力“双提升”，预防和减少校园火灾事故的发生。高山作电信网络诈骗防范专题培训高山作电信网络诈骗防范专题培训北京市公安局刑事侦查总队高山警官作题为“电信网络诈骗基础知识与防范”专题报告。他介绍了电信诈骗的概念、主要特点和诈骗受害者的常见心理特点，重点分析了刷单诈骗、冒充客服、裸聊诈骗等当下高发的诈骗类型以及防范措施。推介了北京反诈中心的三个防范诈骗工具：反电信网络诈骗专用号码96110、“全民反诈”APP、“心防”防范电信网络诈骗手册，表示希望与学校继续加强合作，共同营造“全民反诈，首都无诈”的良好氛围。北京市公安局刑事侦查总队高山警官作题为“电信网络诈骗基础知识与防范”专题报告。他介绍了电信诈骗的概念、主要特点和诈骗受害者的常见心理特点，重点分析了刷单诈骗、冒充客服、裸聊诈骗等当下高发的诈骗类型以及防范措施。推介了北京反诈中心的三个防范诈骗工具：反电信网络诈骗专用号码96110、“全民反诈”APP、“心防”防范电信网络诈骗手册，表示希望与学校继续加强合作，共同营造“全民反诈，首都无诈”的良好氛围。培训会现场培训会现场培训最后，向春表示，安全管理干部队伍是开展安全工作的重要力量，保卫处将持续推动安全管理干部队伍专业化，通过理论培训和实操培训实现持证上岗。六月是安全生产月，希望各单位进一步强化安全管理，开展消防安全隐患排查和整改，开展防范电信网络诈骗宣传教育，提高师生安全意识和技能，切实保障人身财产安全，维护好校园安全稳定。培训最后，向春表示，安全管理干部队伍是开展安全工作的重要力量，保卫处将持续推动安全管理干部队伍专业化，通过理论培训和实操培训实现持证上岗。六月是安全生产月，希望各单位进一步强化安全管理，开展消防安全隐患排查和整改，开展防范电信网络诈骗宣传教育，提高师生安全意识和技能，切实保障人身财产安全，维护好校园安全稳定。各单位安全工作负责人、安全保卫干部等共计150余人参加此次培训。各单位安全工作负责人、安全保卫干部等共计150余人参加此次培训。"
+## [1] "标题："                                      
+## [2] "【我为群众办实事】保卫处：高峰护学，方便师生"
+## [1] "内容："                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+## [2] "2021-06-07 13:562021-06-07 13:56清华校内交通一直备受广大师生员工关注。清华校内交通一直备受广大师生员工关注。保卫处近年来持续探索改进优化交通秩序。党史学习教育开展以来，保卫处把扎实开展“我为群众办实事”实践活动作为党史学习教育的重要内容，继续深化护学方案，服务广大教职工，努力改进高峰时段人员车辆的通行状况，确保安全顺畅。保卫处近年来持续探索改进优化交通秩序。党史学习教育开展以来，保卫处把扎实开展“我为群众办实事”实践活动作为党史学习教育的重要内容，继续深化护学方案，服务广大教职工，努力改进高峰时段人员车辆的通行状况，确保安全顺畅。上下课高峰交通疏导上下课高峰交通疏导在教学区学生上下课拥堵地段安排了12名管控人员疏导交通，避免人流车流交叉造成危险，保障师生有序通行。在教学区学生上下课拥堵地段安排了12名管控人员疏导交通，避免人流车流交叉造成危险，保障师生有序通行。学生上下课高峰期骑行地图学生上下课高峰期骑行地图由于清华校园涵盖教学区、家属区和学生区，中小学幼儿园设在校内或周边，高峰时段接送学的人员、车辆相对集中，容易造成拥堵。由于清华校园涵盖教学区、家属区和学生区，中小学幼儿园设在校内或周边，高峰时段接送学的人员、车辆相对集中，容易造成拥堵。“自保卫处实施一系列交通管控工作以来，早晚高峰有了更有力地交通疏导，秩序得到很大改善，学生家长多次向学校反映道路秩序良好。”清华附小党总支副书记、工会主席郭鸣剑表示。“自保卫处实施一系列交通管控工作以来，早晚高峰有了更有力地交通疏导，秩序得到很大改善，学生家长多次向学校反映道路秩序良好。”清华附小党总支副书记、工会主席郭鸣剑表示。为缓解附小西门为缓解附小西门北向道路通行及停放压力，保卫处增加交通设施（竖立标牌、锥桶）和疏导人员16人，限时行驶、限时单行。设立学生上下学临时停车点，增派维护交通秩序人员，每日7:00-8:00、15:30-16:00、16:30-18:00三个时段，于附小、幼儿园周边路口维护交通秩序，保障学生及家长交通安全。在附小西门北侧路口安装路桩，仅允许送学班车、非机动车通行，禁止其他车辆驶入。北向道路通行及停放压力，保卫处增加交通设施（竖立标牌、锥桶）和疏导人员16人，限时行驶、限时单行。设立学生上下学临时停车点，增派维护交通秩序人员，每日7:00-8:00、15:30-16:00、16:30-18:00三个时段，于附小、幼儿园周边路口维护交通秩序，保障学生及家长交通安全。在附小西门北侧路口安装路桩，仅允许送学班车、非机动车通行，禁止其他车辆驶入。（清华新闻网6月4日电）（清华新闻网6月4日电）"
+## [1] "标题："                                  
+## [2] "清华化工系举行春季安全教育和消防疏散演习"
+## [1] "内容："                           "2021-04-01 14:192021-04-01 14:19"
+## [1] "标题："                              
+## [2] "清华大学2021年全校安全稳定工作会召开"
+## [1] "内容："                           "2021-03-04 14:152021-03-04 14:15"
+## [1] "标题："                     "那些清华疫情防控英雄的故事"
+## [1] "内容："                           "2020-12-15 14:092020-12-15 14:09"
+## [1] "标题："                                         
+## [2] "【清华园的守望者】治安科的故事： 为了诗意的栖居"
+## [1] "内容："                           "2020-11-25 13:592020-11-25 13:59"
+```
+
+---
+
+## 下节预告
+
+- 给R接上互联网🪢：Github with R（与吴温泉博士合讲）
+
+- 不仅仅是编程语言：Rmarkdown与我的学术workflow（用R写论文/做简历/做slides）😎
+
+---
+
+class: inverse, center, middle
+
+# 🦀️蟹蟹🦀️
+
+📧[sunyf20@mails.tsinghua.edu.cn](mailto:sunyf20@mails.tsinghua.edu.cn) 
+
+🧑‍💻[Github: syfyufei](https://syfyufei.github.io/)
+
+💻[Yufei Sun: github.com/syfyufei](https://github.com/syfyufei)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"highlightSpans": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
